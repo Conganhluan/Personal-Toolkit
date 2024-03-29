@@ -4,15 +4,23 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from alive_progress import alive_bar
+import sys
 
-# Create timer and get the input
+# Get the input and output
+username = sys.argv[1]
+if not username:
+    print("Please input the username as an argument!")
+    quit()
 link_list  = [line.strip('\n') for line in open("Block_list.txt", "r", encoding="utf-8").readlines()]
+result_file = open("result.txt","w",encoding='utf-8')
 
 # Prepare driver
-driver = webdriver.Edge()
+options = webdriver.ChromeOptions()
+options.add_argument(r'--user-data-dir=C:\\Users\\%s\\AppData\\Local\\Google\\Chrome\\User Data' % username)
+driver = webdriver.Chrome(options=options)
 driver.get("https://www.facebook.com/")
 wait_for_login = input("")
-wait = WebDriverWait(driver,30)
+wait = WebDriverWait(driver,3600)
 
 # Loop
 with alive_bar(len(link_list)) as bar:
@@ -23,6 +31,7 @@ with alive_bar(len(link_list)) as bar:
             driver.find_element("xpath", '//div[@aria-label="See Options"]')
         except NoSuchElementException:
             print(f"{link:55} already blocked/banned by Facebook")
+            result_file.write(f"{link:55} already blocked/banned by Facebook")
             bar()
             continue
         # Bypass the Facebook anti-script
@@ -48,6 +57,8 @@ with alive_bar(len(link_list)) as bar:
         # Click "Confirm" the second time
         wait.until(lambda x: x.find_element("xpath", '(//span[text()="Confirm"])[2]')).click()
         print(f"{link:55} newly blocked")
+        result_file.write(f"{link:55} newly blocked")
         bar()
 
+result_file.close()
 driver.quit()
